@@ -440,7 +440,7 @@ run_docker_build() {
     
     docker build \
         $no_cache_flag \
-        --progress=${BUILDKIT_PROGRESS:-auto} \
+        ${BUILDKIT_PROGRESS:+--progress=${BUILDKIT_PROGRESS}} \
         --build-arg BUILDKIT_INLINE_CACHE=1 \
         --build-arg USER_ID="$USER_ID" \
         --build-arg GROUP_ID="$GROUP_ID" \
