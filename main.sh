@@ -200,7 +200,7 @@ main() {
         
         # Build core image
         docker build \
-            --progress=${BUILDKIT_PROGRESS:-auto} \
+            ${BUILDKIT_PROGRESS:+--progress=${BUILDKIT_PROGRESS}} \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --build-arg USER_ID="$USER_ID" \
             --build-arg GROUP_ID="$GROUP_ID" \
@@ -590,7 +590,17 @@ LABEL claudebox.project=\"$project_folder_name\""
     
     # Replace WHOLE lines that contain the placeholders (with optional spaces)
     local final_dockerfile
-    final_dockerfile=$(awk -v pi="$profile_installations" -v lbs="$labels" '
+    # BSD awk (macOS/FreeBSD) cannot handle newlines in -v values; use gawk
+    local awk_cmd="awk"
+    case "$(uname -s)" in
+        Darwin|FreeBSD)
+            if command -v gawk >/dev/null 2>&1; then
+                awk_cmd="gawk"
+            else
+                error "GNU awk (gawk) is required on macOS/FreeBSD. Install via: brew install gawk (mac↴                                                                     …OS) or pkg install gawk (FreeBSD)"            fi
+            ;;
+    esac
+    final_dockerfile=$($awk_cmd -v pi="$profile_installations" -v lbs="$labels" '
     # If the whole line is {{ PROFILE_INSTALLATIONS }}, print injected block and skip
     /^[[:space:]]*\{\{[[:space:]]*PROFILE_INSTALLATIONS[[:space:]]*\}\}[[:space:]]*$/ { print pi; next }
     # If the whole line is {{ LABELS }}, print labels block and skip
